@@ -1,95 +1,39 @@
-# if you dont use pipenv uncomment the following:
-# from dotenv import load_dotenv
-# load_dotenv()
-
-#Step1a: Setup Text to Speech–TTS–model with gTTS
 import os
+import platform
+import subprocess
+from pydub import AudioSegment
 from gtts import gTTS
-
-def text_to_speech_with_gtts_old(input_text, output_filepath):
-    language="en"
-
-    audioobj= gTTS(
-        text=input_text,
-        lang=language,
-        slow=False
-    )
-    audioobj.save(output_filepath)
-
-
-input_text="Hi this is Ai Assistant For Acchu..!"
-text_to_speech_with_gtts_old(input_text=input_text, output_filepath="gtts_testing.mp3")
-
-#Step1b: Setup Text to Speech–TTS–model with ElevenLabs
 import elevenlabs
 from elevenlabs.client import ElevenLabs
 
-ELEVENLABS_API_KEY=os.environ.get("ELEVENLABS_API_KEY")
+# Load API Key
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
 
-def text_to_speech_with_elevenlabs_old(input_text, output_filepath):
-    client=ElevenLabs(api_key=ELEVENLABS_API_KEY)
-    audio=client.generate(
-        text= input_text,
-        voice= "Aria",
-        output_format= "mp3_22050_32",
-        model= "eleven_turbo_v2"
-    )
-    elevenlabs.save(audio, output_filepath)
+# Function to convert MP3 to WAV (for Windows playback)
+def convert_mp3_to_wav(mp3_filepath):
+    wav_filepath = mp3_filepath.replace(".mp3", ".wav")  # Change extension
+    audio = AudioSegment.from_mp3(mp3_filepath)
+    audio.export(wav_filepath, format="wav")  # Convert MP3 to WAV
+    return wav_filepath
 
-#text_to_speech_with_elevenlabs_old(input_text, output_filepath="elevenlabs_testing.mp3") 
+# Function to play audio (cross-platform)
+def play_audio(file_path):
+    if os.path.exists(file_path):
+        os_name = platform.system()
+        try:
+            if os_name == "Darwin":  # macOS
+                subprocess.run(["afplay", file_path])
+            elif os_name == "Windows":  # Windows
+                wav_file = convert_mp3_to_wav(file_path)  # Convert MP3 to WAV
+                subprocess.run(["powershell", "-c", f"(New-Object Media.SoundPlayer '{wav_file}').PlaySync();"])
+            elif os_name == "Linux":  # Linux
+                subprocess.run(["aplay", file_path])
+        except Exception as e:
+            print(f"Error playing audio: {e}")
 
-#Step2: Use Model for Text output to Voice
-
-import subprocess
-import platform
-
-def text_to_speech_with_gtts(input_text, output_filepath):
-    language="en"
-
-    audioobj= gTTS(
-        text=input_text,
-        lang=language,
-        slow=False
-    )
-    audioobj.save(output_filepath)
-    os_name = platform.system()
-    try:
-        if os_name == "Darwin":  # macOS
-            subprocess.run(['afplay', output_filepath])
-        elif os_name == "Windows":  # Windows
-            subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{output_filepath}").PlaySync();'])
-        elif os_name == "Linux":  # Linux
-            subprocess.run(['aplay', output_filepath])  # Alternative: use 'mpg123' or 'ffplay'
-        else:
-            raise OSError("Unsupported operating system")
-    except Exception as e:
-        print(f"An error occurred while trying to play the audio: {e}")
-
-
-input_text="Hi this is Ai with Hassan, autoplay testing!"
-#text_to_speech_with_gtts(input_text=input_text, output_filepath="gtts_testing_autoplay.mp3")
-
-
+# Function for text-to-speech using ElevenLabs
 def text_to_speech_with_elevenlabs(input_text, output_filepath):
-    client=ElevenLabs(api_key=ELEVENLABS_API_KEY)
-    audio=client.generate(
-        text= input_text,
-        voice= "Aria",
-        output_format= "mp3_22050_32",
-        model= "eleven_turbo_v2"
-    )
+    client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+    audio = client.generate(text=input_text, voice="Aria", output_format="mp3_22050_32", model="eleven_turbo_v2")
     elevenlabs.save(audio, output_filepath)
-    os_name = platform.system()
-    try:
-        if os_name == "Darwin":  # macOS
-            subprocess.run(['afplay', output_filepath])
-        elif os_name == "Windows":  # Windows
-            subprocess.run(['ffplay', '-nodisp', '-autoexit', output_filepath])
-        elif os_name == "Linux":  # Linux
-            subprocess.run(['aplay', output_filepath])  # Alternative: use 'mpg123' or 'ffplay'
-        else:
-            raise OSError("Unsupported operating system")
-    except Exception as e:
-        print(f"An error occurred while trying to play the audio: {e}")
-
-#text_to_speech_with_elevenlabs(input_text, output_filepath="elevenlabs_testing_autoplay.mp3")
+    play_audio(output_filepath)  # Play after conversion
