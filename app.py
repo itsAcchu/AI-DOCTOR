@@ -1,5 +1,3 @@
-# app.py
-
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -10,7 +8,6 @@ from brain_of_the_doctor import encode_image, analyze_image_with_query
 from voice_of_the_patient import record_audio, transcribe_with_groq
 from voice_of_the_doctor import text_to_speech_with_gtts, text_to_speech_with_elevenlabs
 
-# Enhanced system prompt with more medical guidance and medication recommendations
 system_prompt = """You are Dr. AI, a professional medical consultant with extensive clinical experience. Your task is to analyze the provided medical image along with the patient's description.
 
 Analysis Guidelines:
@@ -38,23 +35,16 @@ Always include these important disclaimers:
 
 Patient's description: """
 
-# Function to process inputs with enhanced loading indicators
 def process_inputs(audio_filepath, image_filepath, progress=gr.Progress()):
     results = {
         "speech_to_text": "",
         "doctor_response": "",
         "voice_filepath": ""
     }
-    
-    # Initialize result object
     output_filepath = "doctor_response.mp3"
-    
     try:
-        # Step 1: Initial processing
         progress(0.05, "Initializing analysis...")
-        time.sleep(0.5)  # Small delay for visual feedback
-        
-        # Step 2: Transcribe audio (with detailed progress indicator)
+        time.sleep(0.5)
         progress(0.1, "Processing your audio description...")
         if audio_filepath:
             progress(0.2, "Converting speech to text...")
@@ -65,264 +55,94 @@ def process_inputs(audio_filepath, image_filepath, progress=gr.Progress()):
             )
         else:
             results["speech_to_text"] = "No audio provided. Please describe your medical concern."
-        
-        # Step 3: Analyze image with incremental updates
         progress(0.3, "Preparing medical image...")
         if image_filepath:
             progress(0.4, "Analyzing visual patterns...")
-            # Combine system prompt with patient's transcribed query
             full_query = system_prompt + results["speech_to_text"]
             progress(0.5, "Consulting medical knowledge base...")
             results["doctor_response"] = analyze_image_with_query(
-                query=full_query, 
-                encoded_image=encode_image(image_filepath), 
-                model="llama-3.2-11b-vision-preview"
+                query=full_query,
+                encoded_image=encode_image(image_filepath),
+                model="meta-llama/llama-4-scout-17b-16e-instruct"
             )
         else:
             results["doctor_response"] = "No image provided for analysis. Please upload a clear medical image for diagnosis."
-        
-        # Step 4: Convert response to speech with incremental updates
         progress(0.7, "Generating doctor's response...")
         progress(0.8, "Creating natural voice output...")
         text_to_speech_with_elevenlabs(
-            input_text=results["doctor_response"], 
+            input_text=results["doctor_response"],
             output_filepath=output_filepath
         )
         results["voice_filepath"] = output_filepath
-        
         progress(0.95, "Finalizing results...")
-        time.sleep(0.5)  # Small delay for visual feedback
+        time.sleep(0.5)
         progress(1.0, "Consultation complete!")
-        
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
         results["doctor_response"] = error_message
-        # Generate error message audio
         text_to_speech_with_gtts(
             input_text="I'm sorry, there was an error processing your request. Please try again.",
             output_filepath=output_filepath
         )
         results["voice_filepath"] = output_filepath
-    
     return results["speech_to_text"], results["doctor_response"], results["voice_filepath"]
 
-# Custom CSS for premium look with green theme
 custom_css = """
 :root {
-    --primary-color: #2e7d32;  /* Dark green instead of gray */
-    --secondary-color: #f0f7f0;  /* Light green tint */
-    --accent-color: #1b5e20;  /* Darker green */
+    --primary-color: #2e7d32;
+    --secondary-color: #f0f7f0;
+    --accent-color: #1b5e20;
     --text-color: #333333;
-    --light-text: #4d6b50;  /* Greenish gray */
+    --light-text: #4d6b50;
     --border-radius: 8px;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.header h1 {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-    margin-bottom: 8px;
-    font-weight: 700;
-}
-
-.header h2 {
-    font-size: 1.2rem;
-    color: var(--light-text);
-    font-weight: 400;
-    margin-bottom: 16px;
-}
-
-.card {
-    background: white;
-    border-radius: var(--border-radius);
-    padding: 24px;
-    box-shadow: var(--shadow);
-    margin-bottom: 24px;
-    border: 1px solid #e0e0e0;
-    overflow: hidden;
-}
-
-.card-title {
-    font-size: 1.2rem;
-    color: var(--primary-color);
-    margin-bottom: 16px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-
-.card-title svg {
-    margin-right: 10px;
-}
-
-.primary-button {
-    background: var(--primary-color) !important;
-    color: white !important;
-    padding: 12px 24px !important;
-    border-radius: var(--border-radius) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-    transition: all 0.3s ease !important;
-    border: none !important;
-}
-
-.primary-button:hover {
-    background: var(--accent-color) !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
-
-.secondary-button {
-    background: white !important;
-    color: var(--primary-color) !important;
-    border: 1px solid var(--primary-color) !important;
-    padding: 12px 24px !important;
-    border-radius: var(--border-radius) !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-}
-
-.secondary-button:hover {
-    background: #f5f5f5 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-}
-
-.footer {
-    text-align: center;
-    margin-top: 30px;
-    color: var(--light-text);
-    font-size: 0.9rem;
-}
-
-/* Enhance Gradio components */
-.gradio-container {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-}
-
-.gr-button {
-    min-width: 140px !important;
-    border-radius: var(--border-radius) !important;
-}
-
-.gr-panel {
-    border-radius: var(--border-radius) !important;
-    border: 1px solid #e0e0e0 !important;
-    overflow: hidden !important;
-}
-
-.gr-box {
-    border-radius: var(--border-radius) !important;
-    overflow: hidden !important;
-}
-
-.gr-form {
-    border-radius: var(--border-radius) !important;
-    overflow: hidden !important;
-}
-
-.gr-accordion {
-    border-radius: var(--border-radius) !important;
-    overflow: hidden !important;
-}
-
-/* Custom loading animation */
-.progress-bar {
-    height: 4px;
-    background: #eaeaea;
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #2e7d32, #81c784);  /* Green gradient */
-    border-radius: 2px;
-    animation: shimmer 1.5s infinite;
-    background-size: 200% 100%;
-}
-
-.progress-text {
-    font-size: 0.85rem;
-    color: var(--light-text);
-    margin-bottom: 5px;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-    100% {
-        background-position: 200% 0;
-    }
-}
-
-/* Fix all corner radii */
-div[class*="message"], 
-div[class*="input"], 
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.header { text-align: center; margin-bottom: 30px; }
+.header h1 { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 8px; font-weight: 700; }
+.header h2 { font-size: 1.2rem; color: var(--light-text); font-weight: 400; margin-bottom: 16px; }
+.card { background: white; border-radius: var(--border-radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; border: 1px solid #e0e0e0; overflow: hidden; }
+.card-title { font-size: 1.2rem; color: var(--primary-color); margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; }
+.card-title svg { margin-right: 10px; }
+.primary-button { background: var(--primary-color) !important; color: white !important; padding: 12px 24px !important; border-radius: var(--border-radius) !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important; transition: all 0.3s ease !important; border: none !important; }
+.primary-button:hover { background: var(--accent-color) !important; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important; transform: translateY(-2px) !important; }
+.secondary-button { background: white !important; color: var(--primary-color) !important; border: 1px solid var(--primary-color) !important; padding: 12px 24px !important; border-radius: var(--border-radius) !important; font-weight: 600 !important; transition: all 0.3s ease !important; }
+.secondary-button:hover { background: #f5f5f5 !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; }
+.footer { text-align: center; margin-top: 30px; color: var(--light-text); font-size: 0.9rem; }
+.gradio-container { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; }
+.gr-button { min-width: 140px !important; border-radius: var(--border-radius) !important; }
+.gr-panel { border-radius: var(--border-radius) !important; border: 1px solid #e0e0e0 !important; overflow: hidden !important; }
+.gr-box { border-radius: var(--border-radius) !important; overflow: hidden !important; }
+.gr-form { border-radius: var(--border-radius) !important; overflow: hidden !important; }
+.gr-accordion { border-radius: var(--border-radius) !important; overflow: hidden !important; }
+.progress-bar { height: 4px; background: #eaeaea; border-radius: 2px; overflow: hidden; margin: 10px 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #2e7d32, #81c784); border-radius: 2px; animation: shimmer 1.5s infinite; background-size: 200% 100%; }
+.progress-text { font-size: 0.85rem; color: var(--light-text); margin-bottom: 5px; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+div[class*="message"],
+div[class*="input"],
 div[class*="output"],
 div[class*="textbox"],
 div[class*="audio"],
-div[class*="image"] {
-    border-radius: var(--border-radius) !important;
-    overflow: hidden !important;
-}
-
-input, textarea, select, button {
-    border-radius: var(--border-radius) !important;
-}
+div[class*="image"] { border-radius: var(--border-radius) !important; overflow: hidden !important; }
+input, textarea, select, button { border-radius: var(--border-radius) !important; }
 """
 
-# Create the enhanced interface with green theme
 def create_interface():
-    theme = gr.themes.Base(
-        primary_hue="green",  # Changed from "gray" to "green"
-        secondary_hue="teal",  # Changed from "gray" to "teal" 
-        neutral_hue="slate",  # Changed from "gray" to "slate"
-        radius_size=gr.themes.sizes.radius_sm,
-        font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
-    ).set(
-        body_background_fill="#f5f7f5",  # Slight green tint
-        button_primary_background_fill="#2e7d32",  # Dark green
-        button_primary_background_fill_hover="#1b5e20",  # Darker green
-        button_primary_border_color="*primary_background_fill",
-        button_primary_text_color="white",
-        button_secondary_border_color="#2e7d32",  # Dark green
-        button_secondary_text_color="#2e7d32",  # Dark green
-        block_title_text_color="#2e7d32",  # Dark green
-        block_title_background_fill="white",
-        block_shadow="0 4px 12px rgba(0, 0, 0, 0.1)",
-        background_fill_primary="white",
-        background_fill_secondary="#f0f7f0",  # Light green tint
-    )
-    
-    with gr.Blocks(theme=theme, css=custom_css) as iface:
-        # Logo and header
+    with gr.Blocks() as iface:
         with gr.Row(elem_classes="header"):
             with gr.Column():
                 gr.Markdown(
                     """
                     # MediScan AI
                     ### Advanced Medical Imaging Analysis & Professional Consultation
-                    
+
                     *Using state-of-the-art AI to provide preliminary medical assessments*
                     """
                 )
-        
+
         with gr.Row(equal_height=True, elem_classes="container"):
             with gr.Column(scale=1, min_width=400, elem_classes="card"):
-                # First card - Audio input
                 gr.Markdown(
                     """
                     <div class="card-title">
@@ -332,13 +152,12 @@ def create_interface():
                     """
                 )
                 audio_input = gr.Audio(
-                    sources=["microphone"], 
+                    sources=["microphone"],
                     type="filepath",
                     label="Record a detailed description of your symptoms",
                     elem_id="audio-input"
                 )
-                
-                # Second card - Image input
+
                 gr.Markdown(
                     """
                     <div class="card-title">
@@ -353,13 +172,12 @@ def create_interface():
                     elem_id="image-input",
                     height=260
                 )
-                
+
                 with gr.Row():
                     submit_btn = gr.Button("Begin Analysis", elem_classes="primary-button")
                     clear_btn = gr.Button("New Consultation", elem_classes="secondary-button")
-                
+
             with gr.Column(scale=1, min_width=400, elem_classes="card"):
-                # First result card - Transcription
                 gr.Markdown(
                     """
                     <div class="card-title">
@@ -373,8 +191,7 @@ def create_interface():
                     elem_id="transcription-output",
                     lines=3
                 )
-                
-                # Second result card - Analysis
+
                 gr.Markdown(
                     """
                     <div class="card-title">
@@ -388,8 +205,7 @@ def create_interface():
                     elem_id="analysis-output",
                     lines=10
                 )
-                
-                # Third result card - Audio output
+
                 gr.Markdown(
                     """
                     <div class="card-title">
@@ -402,8 +218,7 @@ def create_interface():
                     label="Listen to Dr. AI's voice response",
                     elem_id="audio-output"
                 )
-        
-        # Footer
+
         gr.Markdown(
             """
             <div class="footer">
@@ -413,27 +228,22 @@ def create_interface():
             """,
             elem_classes="footer"
         )
-        
-        # Set up event handlers
+
         submit_btn.click(
             fn=process_inputs,
             inputs=[audio_input, image_input],
             outputs=[text_output, response_output, audio_output]
         )
-        
+
         clear_btn.click(
             fn=lambda: (None, None, "", "", None),
             inputs=[],
             outputs=[audio_input, image_input, text_output, response_output, audio_output]
         )
-        
+
     return iface
 
-# Main execution
 if __name__ == "__main__":
-    # Create directories for examples if they don't exist
     os.makedirs("examples", exist_ok=True)
-    
-    # Launch the interface
     iface = create_interface()
-    iface.launch(debug=True)  # Removed share=True to avoid the virus detection issue
+    iface.launch(debug=True, css=custom_css)
